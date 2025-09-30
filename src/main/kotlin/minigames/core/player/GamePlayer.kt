@@ -1,6 +1,8 @@
 package minigames.core.player
 
 import minigames.plugin
+import org.bukkit.GameMode
+import org.bukkit.attribute.Attribute.MAX_HEALTH
 import java.util.UUID
 
 class GamePlayer(
@@ -23,6 +25,13 @@ class GamePlayer(
     fun addDeath() {
         deaths++
     }
+
+    fun onDeath() {
+        bukkitPlayer.health = bukkitPlayer.getAttribute(MAX_HEALTH)!!.value
+        bukkitPlayer.fallDistance = 0.0f
+        bukkitPlayer.gameMode = GameMode.SPECTATOR
+    }
+
 
     fun sendMessage(message: String) {
         bukkitPlayer.sendMessage(message)

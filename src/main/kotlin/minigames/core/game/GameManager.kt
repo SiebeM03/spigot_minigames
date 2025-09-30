@@ -47,6 +47,12 @@ class GameManager {
         }
     }
 
+    fun endGame(uuid: UUID) {
+        val game = activeGames[uuid] ?: return
+        plugin.worldManager.destroyGameWorld(game.gameWorld)
+        activeGames.remove(uuid)
+    }
+
     fun getGameByPlayer(player: Player): Game? =
         GamesQuery.builder().hasPlayer(player).first()
 

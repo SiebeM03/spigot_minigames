@@ -2,18 +2,16 @@ package minigames.core.game
 
 import minigames.core.player.GamePlayer
 import minigames.core.world.GameWorld
-import minigames.events.EventBus
 import minigames.core.world.WorldType
+import minigames.events.EventBus
 import minigames.plugin
 import minigames.util.Color
 import minigames.util.Messaging
 import minigames.util.TaskUtil
+import minigames.util.logging.getLogger
 import org.bukkit.Bukkit
-import org.bukkit.GameMode
 import org.bukkit.Location
-import org.bukkit.attribute.Attribute.MAX_HEALTH
 import org.bukkit.entity.Player
-import org.bukkit.event.Event
 import org.bukkit.event.Listener
 import java.util.*
 
@@ -51,11 +49,10 @@ abstract class Game(
 
     // ---- Lifecycle ----
     fun start() {
-        if (isRunning) return
         state = GameState.PLAYING
         TaskUtil.runCountdown(
             20, 10,
-            onTick = { t -> this.broadcast("${Color.YELLOW}Countdown: $t") },
+            onTick = { t -> this.broadcast("${Color.YELLOW}Game staring in ${t}s") },
             onFinish = {
                 this.broadcast("${Color.GREEN}Go!")
                 onStart()
@@ -64,22 +61,32 @@ abstract class Game(
     }
 
     fun end() {
-        if (!isRunning) return
         state = GameState.ENDED
         onEnd()
         TaskUtil.runTaskLater(20 * 5) {
-            getPlayers().forEach { it.teleportToLobby() }
         }
+        TaskUtil.runCountdown(
+            20, 5,
+            onTick = { t -> this.broadcast("${Color.YELLOW}You will be teleported back to the lobby in ${t}s") },
+            onFinish = {
+                getPlayers().forEach {
+                    it.teleportToLobby()
+                }
+                plugin.gameManager.endGame(uuid)
+            }
+        )
         eventBus.clear()
     }
 
     fun handlePlayerDeath(player: Player) {
-        player.health = player.getAttribute(MAX_HEALTH)!!.value
-        player.fallDistance = 0.0f
-        player.gameMode = GameMode.SPECTATOR
+        val gamePlayer = getGamePlayer(player) ?: return
+        gamePlayer.onDeath()
         Bukkit.getScheduler().runTaskLater(plugin, Runnable {
             player.teleport(Location(player.world, 0.0, 90.0, 0.0, 0.0f, 0.0f))
         }, 1)
+        if (checkWinCondition()) {
+            end()
+        }
     }
 
     fun cleanup() {
@@ -99,5 +106,5 @@ abstract class Game(
     protected open fun cleanupSubClass() {}
     protected open fun onPlayerJoin(player: GamePlayer) {}
     protected open fun onPlayerLeave(player: GamePlayer) {}
-    abstract fun checkWinCondition()
+    abstract fun checkWinCondition(): Boolean
 }

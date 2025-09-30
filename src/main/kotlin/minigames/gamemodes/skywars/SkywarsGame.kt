@@ -77,12 +77,13 @@ class SkywarsGame(gameWorld: GameWorld) : Game(gameWorld) {
         this.broadcast("SkyWars ended in ${gameWorld.name}!")
     }
 
-    override fun checkWinCondition() {
+    override fun checkWinCondition(): Boolean {
         val alive = getPlayers().filter { it.state == PlayerState.ALIVE }
         if (alive.size <= 1) {
             val winner = alive.firstOrNull()
             this.broadcast("Winner: ${winner?.bukkitPlayer?.name ?: "Nobody"}")
-            end()
+            return true
         }
+        return false
     }
 }

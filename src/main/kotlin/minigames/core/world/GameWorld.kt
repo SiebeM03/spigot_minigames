@@ -8,6 +8,7 @@ import org.bukkit.World
 import org.bukkit.entity.Player
 import java.time.Instant
 import java.util.*
+import kotlin.math.log
 
 /**
  * Wrapper around Bukkit.World that provides game-specific functionality
@@ -67,6 +68,9 @@ class GameWorld(
 
     /** Spawns a player at the next available spawn location */
     fun spawnPlayer(player: Player): Boolean {
+        if (worldType == WorldType.LOBBY) {
+            return teleportPlayer(player, worldConfig.spawns.first())
+        }
         if (!isActive) return false
         if (playerCount >= template.maxPlayers) return false
 
