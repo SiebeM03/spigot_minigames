@@ -1,0 +1,6 @@
+# Enable debug logging (shows detailed debug messages)
+debug-logging: true
+
+worlds:
+  templates:
+    dir: "templates"

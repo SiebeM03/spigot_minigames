@@ -1,0 +1,25 @@
+#main: org.example.ServerEntry
+main: minigames.ServerPlugin
+name: Hello
+version: 1.0
+author: Woarey
+api-version: 1.13
+
+commands:
+#  world:
+#    description: Manages world creation and teleportation
+#    usage: |
+#      /world create <template_name|void> <world_name> - Creates a new world from a template or as a void world and names it <world_name>
+#      /world spawn <world_name> - Teleports the player to the spawn of <world_name>
+#  test:
+#  skywars:
+#  setup:
+#    description: Setup a game world
+#    usage: /setup
+#    permission: world.setup
+  game:
+  setup:
+    description: Setup a game world
+    usage: /setup <template_name>
+    permission: world.setup
+
