@@ -1,6 +1,7 @@
 package minigames.core.game
 
 import minigames.core.player.GamePlayer
+import minigames.core.player.PlayerState
 import minigames.core.world.GameWorld
 import minigames.core.world.WorldType
 import minigames.events.EventBus
@@ -8,7 +9,6 @@ import minigames.plugin
 import minigames.util.Color
 import minigames.util.Messaging
 import minigames.util.TaskUtil
-import minigames.util.logging.getLogger
 import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.Player
@@ -26,6 +26,7 @@ abstract class Game(
     val isRunning get() = state == GameState.PLAYING
     val hasRoom get() = gameWorld.hasRoom
     val eventBus = EventBus()
+    var startTime: Long? = null
 
     init {
         registerEvents()
@@ -37,6 +38,14 @@ abstract class Game(
         players[bukkit.uniqueId] = gp
         onPlayerJoin(gp)
         gameWorld.spawnPlayer(bukkit)
+
+        if (!bukkit.isOp) {
+            bukkit.inventory.clear()
+        }
+
+        players.forEach { it ->
+            createScoreBoard(it.value.bukkitPlayer)
+        }
     }
 
     open fun removePlayer(bukkit: Player) {
@@ -49,11 +58,17 @@ abstract class Game(
 
     // ---- Lifecycle ----
     fun start() {
-        state = GameState.PLAYING
+        state = GameState.STARTING
         TaskUtil.runCountdown(
             20, 10,
             onTick = { t -> this.broadcast("${Color.YELLOW}Game staring in ${t}s") },
             onFinish = {
+                state = GameState.PLAYING
+                startTime = System.nanoTime()
+                players.forEach { it ->
+                    it.value.state = PlayerState.ALIVE
+                }
+
                 this.broadcast("${Color.GREEN}Go!")
                 onStart()
             }
@@ -80,7 +95,9 @@ abstract class Game(
 
     fun handlePlayerDeath(player: Player) {
         val gamePlayer = getGamePlayer(player) ?: return
+        gamePlayer.state = PlayerState.ELIMINATED
         gamePlayer.onDeath()
+        gamePlayer.addDeath()
         Bukkit.getScheduler().runTaskLater(plugin, Runnable {
             player.teleport(Location(player.world, 0.0, 90.0, 0.0, 0.0f, 0.0f))
         }, 1)
@@ -103,6 +120,7 @@ abstract class Game(
     protected abstract fun registerEvents()
     protected abstract fun onStart()
     protected abstract fun onEnd()
+    protected open fun createScoreBoard(player: Player) {}
     protected open fun cleanupSubClass() {}
     protected open fun onPlayerJoin(player: GamePlayer) {}
     protected open fun onPlayerLeave(player: GamePlayer) {}

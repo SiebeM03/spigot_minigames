@@ -210,11 +210,11 @@ class WorldManager {
 
         fun destroy(gameWorld: GameWorld): CompletableFuture<Boolean> {
             val future = CompletableFuture<Boolean>()
+            ejectPlayers(gameWorld)
+            if (!Bukkit.unloadWorld(gameWorld.bukkitWorld, false)) future.complete(false)
 
             CompletableFuture.runAsync {
                 try {
-                    ejectPlayers(gameWorld)
-                    if (!Bukkit.unloadWorld(gameWorld.bukkitWorld, false)) future.complete(false)
                     deleteDir(gameWorld.name)
                     plugin.worldManager.activeWorlds.remove(gameWorld.gameId)
                     gameWorld.deactivate()
